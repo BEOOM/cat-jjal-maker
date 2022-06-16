@@ -43,7 +43,16 @@
           return JSON.parse(localStorage.getItem(key));
         },
       };
-      console.log("야옹");
+
+      const fetchCat = async (text) => {
+        const OPEN_API_DOMAIN = "https://cataas.com";
+        const response = await fetch(
+          `${OPEN_API_DOMAIN}/cat/says/${text}?json=true`
+        );
+        const responseJson = await response.json();
+        return `${OPEN_API_DOMAIN}/${responseJson.url}`;
+      };
+
       function CatItem(props) {
         return (
           <li>
@@ -52,6 +61,10 @@
         );
       }
       function Favorites({ favorites }) {
+        if (favorites.length === 0) {
+          return <div>사진 위 하트를 눌러 고양이 사진을 저장해보아요!</div>;
+        }
+
         return (
           <ul className="favorites">
             {favorites.map((cat) => (
@@ -68,17 +81,20 @@
       //     </div>
       //   );
       // };
-      const MainCard = ({ img, handleHeartClick }) => {
+      const MainCard = ({ img, handleHeartClick, clicked }) => {
+        const heartIcon = clicked ? "💖" : "🤍";
         return (
           <div className="main-card">
             <img src={img} alt="고양이" width="400" />
-            <button onClick={handleHeartClick}>:white_heart:</button>
+            <button onClick={handleHeartClick}>{heartIcon}</button>
           </div>
         );
       };
+
       const Title = (props) => {
         return <h1>{props.children}</h1>;
       };
+
       const Form = ({ updateMainCat }) => {
         const includesHangul = (text) => /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/i.test(text);
         const [value, setValue] = React.useState("");
@@ -91,6 +107,7 @@
           }
           setValue(userValue.toUpperCase());
         }
+
         function handleFormSubmit(e) {
           e.preventDefault();
           SetErrorMsg("");
@@ -98,8 +115,9 @@
             SetErrorMsg("빈 값은 안됨");
             return;
           }
-          updateMainCat();
+          updateMainCat(value);
         }
+
         return (
           <form onSubmit={handleFormSubmit}>
             <input
@@ -121,29 +139,60 @@
           "https://cataas.com//cat/5e9970351b7a400011744233/says/inflearn";
         const CAT3 =
           "https://cataas.com/cat/595f280b557291a9750ebf65/says/JavaScript";
-        const [counter, setCounter] = React.useState(
-          jsonLocalStorage.getItem("counter")
-        );
+        // const [counter, setCounter] = React.useState(
+        //   jsonLocalStorage.getItem("counter")
+        // );
+
+        const [counter, setCounter] = React.useState(() => {
+          return jsonLocalStorage.getItem("counter");
+        });
+
         const [mainCat, setMainCat] = React.useState(CAT1);
         const [favorites, setFavorites] = React.useState(
           jsonLocalStorage.getItem("favorites") || []
         );
-        function updateMainCat(e) {
-          setMainCat(CAT2);
-          const nextCounter = counter + 1;
-          setCounter(nextCounter);
-          jsonLocalStorage.setItem("counter", nextCounter);
+
+        React.useEffect(() => {
+          setInitialCat();
+        }, []);
+        const clicked = favorites.includes(mainCat);
+        async function setInitialCat() {
+          const newCat = await fetchCat("First cat");
+          setMainCat(newCat);
         }
+
+        async function updateMainCat(value) {
+          const newCat = await fetchCat(value);
+          setMainCat(newCat);
+
+          // setCounter(nextCounter);
+          setCounter((prev) => {
+            const nextCounter = prev + 1;
+            jsonLocalStorage.setItem("counter", nextCounter);
+            return nextCounter;
+          });
+        }
+
         function handleHeartClick() {
           const nextFavorites = [...favorites, mainCat];
           setFavorites(nextFavorites);
           jsonLocalStorage.setItem("favorites", nextFavorites);
         }
+
+        // const counterTitle = counter === null ? '' : counter + "번째";
         return (
           <div>
-            <Title>{counter}번째 고양이 가라시대</Title>
+            {counter >= 1 ? (
+              <Title>{counter}번째 고양이 가라시대</Title>
+            ) : (
+              <Title>고양이 가라시대</Title>
+            )}
             <Form updateMainCat={updateMainCat} />
-            <MainCard img={mainCat} handleHeartClick={handleHeartClick} />
+            <MainCard
+              img={mainCat}
+              handleHeartClick={handleHeartClick}
+              clicked={clicked}
+            />
             <Favorites favorites={favorites} />
           </div>
         );
