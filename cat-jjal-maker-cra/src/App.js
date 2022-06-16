@@ -47,6 +47,7 @@ function Favorites({ favorites }) {
 //     </div>
 //   );
 // };
+
 const MainCard = ({ img, handleHeartClick, clicked }) => {
   const heartIcon = clicked ? "💖" : "🤍";
   return (

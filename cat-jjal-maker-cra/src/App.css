@@ -46,10 +46,11 @@
 }
 
 .main-card {
+  position: relative;
 }
 
 .Heart {
-  position: fixed;
-  left: 880px;
-  top: 130px;
+  position: relative;
+  left: -35px;
+  bottom: 10px;
 }
